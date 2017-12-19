@@ -21,33 +21,41 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
+/**
+ * Butterknife 专门为Android View设计的绑定注解，专业解决各种findViewId
+ *recyclerView 设置布局管理器方法
+ * 在竖值滑动时想要刷新页面可以用SwipeRefreshLayout来实现,通过设置OnRefreshListener来监听界面的滑动从而实现刷新
+ */
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     @Bind(R.id.pull_down_srl)
     SwipeRefreshLayout mPullDownSRL;
     @Bind(R.id.app_list_rv)
     RecyclerView mAppListRV;
-
-    private List<AppInfo> mAppInfoList;
-    private AppListAdapter mAppListAdapter;
+    private List<AppInfo> mAppInfoList; //存放数据组
+    private AppListAdapter mAppListAdapter;//数据适配器
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
+        //使用线性布局管理器参数为MainActivity环境
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         mAppListRV.setLayoutManager(linearLayoutManager);
+        //新建一个数组
         mAppInfoList = new ArrayList<>();
+        //新建一个适配器里面存放数组数据
         mAppListAdapter = new AppListAdapter(mAppInfoList);
+        //绑定数组
         mAppListRV.setAdapter(mAppListAdapter);
-
+       //设置监听
         mPullDownSRL.setOnRefreshListener(this);
 
+        //设置post请求
         mPullDownSRL.post(new Runnable() {
             @Override
             public void run() {
-                mPullDownSRL.setRefreshing(true);
+                mPullDownSRL.setRefreshing(true);//方法自动刷新
                 onRefresh();
             }
         });
