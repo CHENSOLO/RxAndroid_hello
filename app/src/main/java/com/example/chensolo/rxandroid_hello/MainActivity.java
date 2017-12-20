@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         mPullDownSRL.post(new Runnable() {
             @Override
             public void run() {
-                mPullDownSRL.setRefreshing(true);//方法自动刷新
+                mPullDownSRL.setRefreshing(true);//展开刷新动画
                 onRefresh();
             }
         });
@@ -76,27 +76,33 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private void loadApp() {
+        //获得已安装的应用程序可以通过getPackageManager
         final PackageManager pm = MainActivity.this.getPackageManager();
+           //创建一个Observable对象
         Observable.create(new Observable.OnSubscribe<ApplicationInfo>() {
 
             @Override
             public void call(Subscriber<? super ApplicationInfo> subscriber) {
+                //得到后放到数组
                 List<ApplicationInfo> infoList = getApplicationInfoList(pm);
                 for (ApplicationInfo info : infoList) {
+                    //依次排列
                     subscriber.onNext(info);
                 }
                 subscriber.onCompleted();
             }
-
-
+            //过滤操作符过滤系统掉app
         }).filter(new Func1<ApplicationInfo, Boolean>() {
             @Override
+            //call的返回值为Bool类型决定了是否将结果输出给订阅者
             public Boolean call(ApplicationInfo applicationInfo) {
                 return (applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM)<=0;
             }
+            //ApplicationInfo并不是所需要的类型，因此通过map操作符将其转换为AppInfo
         }).map(new Func1<ApplicationInfo, AppInfo>() {
 
             @Override
+            //由于获取ApplicationInfo、过滤数据、转换数据相对比较耗时，因此需要通过subscribeOn操作符将这一系列操作放到子线程中来处理；
             public AppInfo call(ApplicationInfo applicationInfo) {
              AppInfo info = new AppInfo();
              info.setAppIcon(applicationInfo.loadIcon(pm));
@@ -104,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                 return info;
             }
+            //因此需要通过observeOn操作符将onNext、onCompleted、onError调到主线程
         }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<AppInfo>() {
                     @Override
